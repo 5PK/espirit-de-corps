@@ -224,7 +224,7 @@ function init() {
 
       actions = {};
 
-      anims.forEach(anim => {
+/*       anims.forEach(anim => {
         const clip = subclip(object.animations[0], anim.name, anim.start, anim.end);
         const action = mixer.clipAction(clip);
         if (!anim.loop) {
@@ -233,7 +233,7 @@ function init() {
         }
         if (anim.next != undefined) action.next = anim.next;
         actions[anim.name] = action;
-      });
+      }); */
 
       object.traverse(function (child) {
         if (child.isMesh) {
@@ -243,7 +243,6 @@ function init() {
       });
 
       object.scale.set(0.03, 0.03, 0.03);
-      //scene.add(object);
       
       player = new PlayerControls({
         mixer: mixer,
@@ -261,15 +260,20 @@ function init() {
         mouseSpeed: 0.002
       });
 
-      player.add(object);
+      const action = mixer.clipAction(object.animations[0]);
+      action.play();
+      //player.add(object);
+
+      //player.playAction('idle');
+
+      scene.add(object);
 
       scene.add(player);
       camera = player.getPerspectiveCamera();
 
 
   
-      //const action = mixer.clipAction(object.animations[0]);
-      //action.play();
+
 
       update();
 
