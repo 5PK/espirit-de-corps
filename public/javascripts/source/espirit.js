@@ -4,11 +4,13 @@ import {
 
 } from "./libs/PointerLock.js";
 
+import EDCPlayerControls from "./libs/Player2.js";
 import PlayerControls from "./libs/Player.js";
 import { FBXLoader } from './libs/FBXLoader.js';
 
-var scene, camera, cameras, cameraIndex, renderer, controls, clock, player, mixer, actions, sun, plane;
+var scene, camera, cameras, cameraIndex, renderer, controls, clock, player, fredMixer, fredActions, actions, sun, plane, mixer;
 var keyboard;
+var _disableFred;
 
 init();
 
@@ -70,8 +72,8 @@ function subclip(sourceClip, name, startFrame, endFrame, fps) {
 }
 
 function init() {
-  const assetPath = 'https://niksfiles.s3.eu-west-2.amazonaws.com/';
-
+  const fredPath = 'https://niksfiles.s3.eu-west-2.amazonaws.com/';
+  const assetPath = '/assets/male';
   clock = new THREE.Clock();
 
   scene = new THREE.Scene();
@@ -148,51 +150,48 @@ function init() {
     { start: 839, end: 858, name: "shuffleLeft", loop: true },
     { start: 899, end: 918, name: "shuffleRight", loop: true },
     { start: 1264, end: 1293, name: "walk", loop: true }
-
   ];
 
-  const anims2 = [
-    { start: 30, end: 59, name: "standing_walk_back", loop: true },
-    { start: 489, end: 548, name: "idle", loop: true },
-    { start: 768, end: 791, name: "standard_run", loop: true },
-    { start: 839, end: 858, name: "left_strafe_walking", loop: true },
-    { start: 899, end: 918, name: "right_strafe_walking", loop: true },
-    { start: 1264, end: 1293, name: "walking", loop: true }
+  const assetsPath2 = '../assets';
+  const anims2 = ["backpedal", "idle", "run", "shuffleLeft", "shuffleRight", "walk"];
 
-  ];
+  var assets = [];
+  anims2.forEach(function (anim) { assets.push(`${assetsPath2}male3/${anim}.fbx`) });
 
-
-    const loader = new THREE.GLTFLoader();
-    loader.setPath(assetPath)
-    loader.load('fred.glb', object => {
-      mixer = new THREE.AnimationMixer(object.scene);
-      mixer.addEventListener('finished', e => {
+  _disableFred = true;
+  if (!_disableFred) {
+    const fredloader = new THREE.GLTFLoader();
+    fredloader.setPath(fredPath)
+    fredloader.load('fred.glb', object => {
+      console.log(object)
+      fredMixer = new THREE.AnimationMixer(object.scene);
+      fredMixer.addEventListener('finished', e => {
         if (e.action.next != undefined) playAction(e.action.next);
       });
       object.scene.children[0].rotation.x = 0;
-      actions = {};
-  
+      fredActions = {};
+
       object.scene.traverse(child => {
         if (child.isMesh) {
           child.castShadow = true;
         }
       });
-  
+
       anims.forEach(anim => {
         const clip = subclip(object.animations[0], anim.name, anim.start, anim.end);
-        const action = mixer.clipAction(clip);
+        const action = fredMixer.clipAction(clip);
         if (!anim.loop) {
           action.loop = THREE.LoopOnce;
           action.clampWhenFinished = true;
         }
         if (anim.next != undefined) action.next = anim.next;
-        actions[anim.name] = action;
+        fredActions[anim.name] = action;
       });
-  
-  
+
+
       player = new PlayerControls({
-        mixer: mixer,
-        actions: actions,
+        mixer: fredMixer,
+        actions: fredActions,
         clock: clock,
         directionVelocity: 3,
         distance: 4,
@@ -208,19 +207,78 @@ function init() {
       sun.target = player;
       object.scene.children[0].scale.set(0.02, 0.02, 0.02);
       player.add(object.scene.children[0]);
-  
-  
+
+
       player.playAction('idle');
-  
+
       camera = player.getPerspectiveCamera();
       scene.add(player);
       update();
     });
+  } else {
+    const loader = new FBXLoader();
+    loader.load(`${assetsPath2}/male3/idle.fbx`, function (object) {
+      console.log(object)
+      mixer = new THREE.AnimationMixer(object);
+      object.name = "Character";
+
+      actions = {};
+
+      anims.forEach(anim => {
+        const clip = subclip(object.animations[0], anim.name, anim.start, anim.end);
+        const action = mixer.clipAction(clip);
+        if (!anim.loop) {
+          action.loop = THREE.LoopOnce;
+          action.clampWhenFinished = true;
+        }
+        if (anim.next != undefined) action.next = anim.next;
+        actions[anim.name] = action;
+      });
+
+      object.traverse(function (child) {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+
+      object.scale.set(0.03, 0.03, 0.03);
+      //scene.add(object);
+      
+      player = new PlayerControls({
+        mixer: mixer,
+        actions: actions,
+        clock: clock,
+        directionVelocity: 3,
+        distance: 4,
+        far: 1024,
+        fov: 60,
+        gravity: 9.81 / 2,
+        height: .5,
+        initialY: 0,
+        jumpVelocity: 1,
+        maxGravity: 54 / 2,
+        mouseSpeed: 0.002
+      });
+
+      player.add(object);
+
+      scene.add(player);
+      camera = player.getPerspectiveCamera();
+
+
+  
+      //const action = mixer.clipAction(object.animations[0]);
+      //action.play();
+
+      update();
+
+    });
+  }
 
 
   window.addEventListener('resize', resize, false);
 }
-
 
 
 
@@ -230,13 +288,17 @@ function update() {
 
 
   const dt = clock.getDelta();
-  mixer.update(dt);
-  //player.animate(dt, plane)
+  if (!_disableFred) {
+    fredMixer.update(dt);
+  } else {
+    mixer.update(dt);
+  }
+
 
   player.animate2(dt);
 
-  const pos = player.position.clone();
-  pos.y += 3;
+  //const pos = player.position.clone();
+  //pos.y += 3;
 
 }
 
@@ -244,7 +306,11 @@ function playAction(name) {
   if (player.userData.actionName == name) return;
   const action = actions[name];
   player.userData.actionName = name;
-  mixer.stopAllAction();
+  if (!_disableFred) {
+    fredMixer.stopAllAction();
+  } else {
+    mixer.stopAllAction();
+  }
   action.reset();
   action.fadeIn(0.5);
   action.play();

@@ -1,6 +1,6 @@
 import * as THREE from './three.module.js';
 
-class PlayerCamera extends THREE.Object3D {
+class EDCPlayerCamera extends THREE.Object3D {
     // Third Person Camera
     constructor({
         distance,
@@ -28,27 +28,9 @@ class PlayerCamera extends THREE.Object3D {
     }
 }
 
-class PlayerSubject extends THREE.Mesh {
-    constructor({
-        height,
-        initialY,
-        ...cameraProps
-    }) {
-        //const geometry = new THREE.ConeGeometry(height / 1.618, height, 5),
-        const camera = new PlayerCamera(cameraProps, height);
-        //material = new THREE.MeshLambertMaterial({color: 0xF44336});
-        //geometry.translate(0, height / 2, 0);
 
-        super();
-        this.rotateX(Math.PI);
-        this.add(camera);
 
-        this.getPerspectiveCamera = camera.getPerspectiveCamera;
-        this.rotateCamera = camera.rotateVertically;
-    }
-}
-
-export default class PlayerControls extends THREE.Object3D {
+export default class EDCPlayerControls extends THREE.Object3D {
     constructor({
         mixer,
         actions,
@@ -57,26 +39,25 @@ export default class PlayerControls extends THREE.Object3D {
         gravity,
         jumpVelocity,
         maxGravity,
-        mouseSpeed,
-        ...meshProps
+        mouseSpeed
     }) {
-   
-        var mesh = new PlayerSubject(meshProps);
 
-           var move = {
-                left: false,
-                front: false,
-                right: false,
-                back: false,
-                jump: false
-            };
+
+        var move = {
+            left: false,
+            front: false,
+            right: false,
+            back: false,
+            jump: false
+        };
 
         super();
 
-        this.add(mesh);
+        this.object = {};
+        this.add = (o) => { this.object = o };
+
 
         this.getPerspectiveCamera = mesh.getPerspectiveCamera;
-        this.getMesh = () => mesh;
 
         this.playerControl = (forward, strafe) => {
             if (forward == 0 && strafe == 0) {
