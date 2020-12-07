@@ -4,13 +4,14 @@ import {
 
 } from "./libs/PointerLock.js";
 
-import EDCPlayerControls from "./libs/Player2.js";
 import PlayerControls from "./libs/Player.js";
 import { FBXLoader } from './libs/FBXLoader.js';
 
 var scene, camera, cameras, cameraIndex, renderer, controls, clock, player, fredMixer, fredActions, actions, sun, plane, mixer;
 var keyboard;
 var _disableFred;
+const _fredPath = 'https://niksfiles.s3.eu-west-2.amazonaws.com/';
+const _assetPath = '/assets/male';
 
 init();
 
@@ -71,9 +72,23 @@ function subclip(sourceClip, name, startFrame, endFrame, fps) {
   return clip;
 }
 
+function loadNextAnim(loader) {
+  //let anim = this.anims.pop();
+  //const game = this;
+  loader.load(`${this.assetsPath}fbx/${anim}.fbx`, function (object) {
+    game.player[anim] = object.animations[0];
+    if (game.anims.length > 0) {
+      game.loadNextAnim(loader);
+    } else {
+      delete game.anims;
+      game.action = "look-around";
+      game.mode = game.modes.ACTIVE;
+    }
+  });
+}
+
 function init() {
-  const fredPath = 'https://niksfiles.s3.eu-west-2.amazonaws.com/';
-  const assetPath = '/assets/male';
+
   clock = new THREE.Clock();
 
   scene = new THREE.Scene();
@@ -161,7 +176,7 @@ function init() {
   _disableFred = true;
   if (!_disableFred) {
     const fredloader = new THREE.GLTFLoader();
-    fredloader.setPath(fredPath)
+    fredloader.setPath(_fredPath)
     fredloader.load('fred.glb', object => {
       console.log(object)
       fredMixer = new THREE.AnimationMixer(object.scene);
@@ -224,29 +239,9 @@ function init() {
 
       actions = {};
 
-/*       anims.forEach(anim => {
-        const clip = subclip(object.animations[0], anim.name, anim.start, anim.end);
-        const action = mixer.clipAction(clip);
-        if (!anim.loop) {
-          action.loop = THREE.LoopOnce;
-          action.clampWhenFinished = true;
-        }
-        if (anim.next != undefined) action.next = anim.next;
-        actions[anim.name] = action;
-      }); */
-
-      object.traverse(function (child) {
-        if (child.isMesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
-        }
-      });
-
-      object.scale.set(0.03, 0.03, 0.03);
-      
       player = new PlayerControls({
         mixer: mixer,
-        actions: actions,
+        //actions: actions,
         clock: clock,
         directionVelocity: 3,
         distance: 4,
@@ -260,21 +255,56 @@ function init() {
         mouseSpeed: 0.002
       });
 
-      const action = mixer.clipAction(object.animations[0]);
-      action.play();
-      //player.add(object);
+      player.root = mixer.getRoot();
 
-      //player.playAction('idle');
+      anims.forEach(anim => {
+        var a = {};
+        console.log(anim.name);
+        loader.load(`${assetsPath2}/male3/${anim.name}.fbx`, function (object) {
+          a = object.animations[0];
+        });
+        anim.animation = a;
+        console.log(anim.animation);
+      })
 
-      scene.add(object);
+      anims.forEach(anim => {
+        //const clip = subclip(anim.animation, anim.name, anim.start, anim.end);
+        const action = mixer.clipAction(object.animations[0]);
+        if (!anim.loop) {
+          action.loop = THREE.LoopOnce;
+          action.clampWhenFinished = true;
+        }
+        if (anim.next != undefined) action.next = anim.next;
+        actions[anim.name] = action;
+      });
+
+      player.setActions(actions);
+
+      object.traverse(function (child) {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+
+      object.scale.set(0.03, 0.03, 0.03);
+      //scene.add(object);
+
+
+
+
+      player.add(object);
+
+
+
+      //const action = mixer.clipAction(object.animations[0]);
+      //action.play();
+      player.playAction('idle');
 
       scene.add(player);
       camera = player.getPerspectiveCamera();
 
-
-  
-
-
+      //loadNextAnim(loader)
       update();
 
     });
@@ -301,8 +331,6 @@ function update() {
 
   player.animate2(dt);
 
-  //const pos = player.position.clone();
-  //pos.y += 3;
 
 }
 

@@ -7,19 +7,13 @@ class PlayerCamera extends THREE.Object3D {
         far,
         fov
     }, height) {
-        //const camera = new THREE.PerspectiveCamera(fov, window.innerWidth / window.innerHeight, 1, far),
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
         const PI_2 = Math.PI / 2;
 
         super();
-
         camera.translateZ(20);
         this.add(camera);
-        //this.translateY(4);
-        //this.rotateX(Math.PI);
-
         this.rotateZ(Math.PI);
-
         this.getPerspectiveCamera = () => camera;
         this.rotateVertically = (radX) => {
             const min = Math.min(PI_2, this.rotation.x + radX);
@@ -34,10 +28,7 @@ class PlayerSubject extends THREE.Mesh {
         initialY,
         ...cameraProps
     }) {
-        //const geometry = new THREE.ConeGeometry(height / 1.618, height, 5),
         const camera = new PlayerCamera(cameraProps, height);
-        //material = new THREE.MeshLambertMaterial({color: 0xF44336});
-        //geometry.translate(0, height / 2, 0);
 
         super();
         this.rotateX(Math.PI);
@@ -51,7 +42,7 @@ class PlayerSubject extends THREE.Mesh {
 export default class PlayerControls extends THREE.Object3D {
     constructor({
         mixer,
-        actions,
+        //actions,
         clock,
         directionVelocity,
         gravity,
@@ -62,7 +53,6 @@ export default class PlayerControls extends THREE.Object3D {
     }) {
    
         var mesh = new PlayerSubject(meshProps);
-
            var move = {
                 left: false,
                 front: false,
@@ -74,10 +64,11 @@ export default class PlayerControls extends THREE.Object3D {
         super();
 
         this.add(mesh);
+        this.actions = {};
 
         this.getPerspectiveCamera = mesh.getPerspectiveCamera;
         this.getMesh = () => mesh;
-
+        this.setActions = (actions) => { this.actions = actions };
         this.playerControl = (forward, strafe) => {
             if (forward == 0 && strafe == 0) {
                 delete this.userData.move;
@@ -116,15 +107,15 @@ export default class PlayerControls extends THREE.Object3D {
             }
         };
 
-        this.playAction = (name) => {
+         this.playAction = (name) => {
             if (this.userData.actionName == name) return;
-            const action = actions[name];
+            const action = this.actions[name];
             this.userData.actionName = name;
             mixer.stopAllAction();
             action.reset();
             action.fadeIn(0.5);
             action.play();
-        }
+        } 
 
         // Events
         const onMouseMove = (event) => {
