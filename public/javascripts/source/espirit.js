@@ -269,7 +269,7 @@ function init() {
 
       anims.forEach(anim => {
         //const clip = subclip(anim.animation, anim.name, anim.start, anim.end);
-        const action = mixer.clipAction(object.animations[0]);
+        const action = mixer.clipAction(anim.animation);
         if (!anim.loop) {
           action.loop = THREE.LoopOnce;
           action.clampWhenFinished = true;
