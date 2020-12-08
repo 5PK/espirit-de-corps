@@ -11,7 +11,8 @@ class PlayerCamera extends THREE.Object3D {
         const PI_2 = Math.PI / 2;
 
         super();
-        camera.translateZ(20);
+        camera.translateY(4);
+        camera.translateZ(15);
         this.add(camera);
         this.rotateZ(Math.PI);
         this.getPerspectiveCamera = () => camera;
@@ -99,9 +100,9 @@ export default class PlayerControls extends THREE.Object3D {
         };
 
         this.playAction = (action) => {
-            const anim = this.anims[action];
-            const a = mixer.clipAction( anim,  this.root );
             mixer.stopAllAction();
+            const anim = this.anims[action];
+            const a = mixer.clipAction(anim);
             this.action = action;
             a.fadeIn(0.5);	
             a.play();
