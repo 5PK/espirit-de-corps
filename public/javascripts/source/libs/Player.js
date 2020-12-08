@@ -57,7 +57,7 @@ export default class PlayerControls extends THREE.Object3D {
         super();
 
         this.add(mesh);
-
+        this.curAnim = "idle";
         this.getPerspectiveCamera = mesh.getPerspectiveCamera;
         this.getMesh = () => mesh;
         this.playerControl = (forward, strafe) => {
@@ -68,42 +68,22 @@ export default class PlayerControls extends THREE.Object3D {
                     this.userData.move.forward = forward;
                     this.userData.move.strafe = strafe;
                 } else {
-                    this.userData.move = { forward, strafe, time: clock.getElapsedTime(), speed: 1 };
+                    this.userData.move = { forward, strafe, time: clock.getElapsedTime(), speed: 5 };
                 }
             }
         };
 
-        this.animate = (dt) => {
-            if (this.userData.move !== undefined) {
-                if (this.userData.move.forward > 0 && this.userData.move.speed < 10) this.userData.move.speed += 0.1;
-                this.translateZ(this.userData.move.forward * dt * this.userData.move.speed);
-                this.translateX(this.userData.move.strafe * dt * this.userData.move.speed);
-
-                //Update actions here
-                if (this.userData.move.forward < 0) {
-                    this.playAction('backpedal');
-                } else if (this.userData.move.forward == 0) {
-                    if (this.userData.move.turn < 0) {
-                        this.playAction('shuffleLeft');
-                    } else {
-                        this.playAction('shuffleRight');
-                    }
-                } else if (this.userData.move.speed > 5) {
-                    this.playAction('run');
-                } else {
-                    this.playAction('walk');
-                }
-            } else {
-                this.playAction('idle');
-            }
-        };
+        this.move = (dt) => {
+            this.translateZ(this.userData.move.forward * dt * this.userData.move.speed);
+            this.translateX(this.userData.move.strafe * dt * this.userData.move.speed);
+        }
 
         this.playAction = (action) => {
             const anim = this.anims[action];
-            const a = this.mixer.clipAction(anim, this.root);
-            //this.mixer.stopAllAction();
-            this.action = action;
-            a.fadeIn(0.5);	
+            const a = this.mixer.clipAction(anim);
+            this.mixer.stopAllAction();
+            this.curAnim = action;
+            //a.fadeIn(.1);	
             a.play();
         }
 
@@ -115,7 +95,7 @@ export default class PlayerControls extends THREE.Object3D {
             this.rotateY(-movementX * mouseSpeed);
         },
             onKeyDown = ({ keyCode }) => {
-
+                console.log(keyCode)
                 let forward = (this.userData.move !== undefined) ? this.userData.move.forward : 0;
                 let strafe = (this.userData.move !== undefined) ? this.userData.move.strafe : 0;
                 let jump = 0;
@@ -143,6 +123,9 @@ export default class PlayerControls extends THREE.Object3D {
                     default:
                         break;
                 }
+
+                var animToPlay = 'walk';
+                if(animToPlay != this.curAnim) this.playAction('walk');
 
                 this.playerControl(forward, strafe);
             },
@@ -176,6 +159,9 @@ export default class PlayerControls extends THREE.Object3D {
                         break;
                 }
 
+                var animToPlay = 'idle';
+                if(animToPlay != this.curAnim) this.playAction('idle');
+                
                 this.playerControl(forward, strafe);
 
             };
