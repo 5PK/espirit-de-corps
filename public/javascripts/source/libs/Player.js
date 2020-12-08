@@ -42,7 +42,6 @@ class PlayerSubject extends THREE.Mesh {
 
 export default class PlayerControls extends THREE.Object3D {
     constructor({
-        mixer,
         clock,
         directionVelocity,
         gravity,
@@ -100,9 +99,9 @@ export default class PlayerControls extends THREE.Object3D {
         };
 
         this.playAction = (action) => {
-            mixer.stopAllAction();
             const anim = this.anims[action];
-            const a = mixer.clipAction(anim);
+            const a = this.mixer.clipAction(anim, this.root);
+            //this.mixer.stopAllAction();
             this.action = action;
             a.fadeIn(0.5);	
             a.play();

@@ -353,6 +353,7 @@ class Game{
 
 	set action(name){
 		const anim = this.player[name];
+		console.log(anim)
 		const action = this.player.mixer.clipAction( anim,  this.player.root );
 		this.player.mixer.stopAllAction();
 		this.player.action = name;

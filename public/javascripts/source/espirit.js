@@ -106,7 +106,6 @@ function init() {
 
 
     player = new PlayerControls({
-      mixer: mixer ,
       clock: clock,
       directionVelocity: 3,
       distance: 4,
@@ -121,6 +120,7 @@ function init() {
     });
 
     player.root = mixer.getRoot();
+    player.mixer = mixer;
 
     object.traverse(function (child) {
       if (child.isMesh) {
@@ -159,8 +159,9 @@ function update() {
   renderer.render(scene, camera);
 
   const dt = clock.getDelta();
-  mixer.update(dt);
+  player.mixer.update(dt);
   player.animate(dt);
+
 
 }
 
