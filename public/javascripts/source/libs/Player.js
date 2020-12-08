@@ -80,19 +80,32 @@ export default class PlayerControls extends THREE.Object3D {
                 this.translateX(this.userData.move.strafe * dt * this.userData.move.speed);
 
                 //Update actions here
-               
+                if (this.userData.move.forward < 0) {
+                    this.playAction('backpedal');
+                } else if (this.userData.move.forward == 0) {
+                    if (this.userData.move.turn < 0) {
+                        this.playAction('shuffleLeft');
+                    } else {
+                        this.playAction('shuffleRight');
+                    }
+                } else if (this.userData.move.speed > 5) {
+                    this.playAction('run');
+                } else {
+                    this.playAction('walk');
+                }
             } else {
-                // idle
+                this.playAction('idle');
             }
         };
 
         this.playAction = (action) => {
-            const anim = this.anims[name];
-            const action = this.mixer.clipAction( anim,  this.root );
-            this.mixer.stopAllAction();
-            this.player.action = name;
-            action.fadeIn(0.5);	
-            action.play();
+            const anim = this.anims[action];
+            console.log(anim);
+            const a = mixer.clipAction( anim,  this.root );
+            mixer.stopAllAction();
+            this.action = action;
+            a.fadeIn(0.5);	
+            a.play();
         }
 
         // Events

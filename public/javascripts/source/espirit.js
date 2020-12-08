@@ -7,9 +7,9 @@ import {
 import PlayerControls from "./libs/Player.js";
 import { FBXLoader } from './libs/FBXLoader.js';
 
-var scene, camera, renderer, controls, clock, player, plane, mixer;
+var scene, camera, renderer, controls, clock, player, plane, mixer, sun;
 const _assetPath = '/assets/male3';
-var _anims = ["backpeda;", "idle", "run", "shuffleLeft", "shuffleRight", "walk"];
+var _anims = ["backpedal", "idle", "run", "shuffleLeft", "shuffleRight", "walk"];
 
 var _assets = [];
 init();
@@ -20,11 +20,7 @@ function loadNextAnim(loader) {
   loader.load(`${_assetPath}/${anim}.fbx`, function (object) {
     player.anims[anim] = object.animations[0];
     if (_anims.length > 0) {
-      game.loadNextAnim(loader);
-    } else {
-      delete _anims;
-      //game.action = "idle";
-      // game.mode = game.modes.ACTIVE;
+      loadNextAnim(loader);
     }
   });
 }
@@ -103,14 +99,14 @@ function init() {
   _anims.forEach( function(anim){ _assets.push(`${_assetPath}/${anim}.fbx`)});
 
   const loader = new FBXLoader();
-  loader.load(`${assetsPath2}/male3/idle.fbx`, function (object) {
+  loader.load(`${_assetPath}/idle.fbx`, function (object) {
     console.log(object)
-    object.mixer = new THREE.AnimationMixer(object);
+    mixer = new THREE.AnimationMixer(object);
     object.name = "Character";
 
 
     player = new PlayerControls({
-      mixer: object.mixer ,
+      mixer: mixer ,
       clock: clock,
       directionVelocity: 3,
       distance: 4,
@@ -124,7 +120,7 @@ function init() {
       mouseSpeed: 0.002
     });
 
-    player.root = object.mixer.getRoot();
+    player.root = mixer.getRoot();
 
     object.traverse(function (child) {
       if (child.isMesh) {
@@ -141,7 +137,7 @@ function init() {
     //action.play();
 
     scene.add(player);
-
+    player.anims = {};
     player.anims.idle = object.animations[0];
 
     camera = player.getPerspectiveCamera();
