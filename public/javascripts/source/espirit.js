@@ -7,82 +7,24 @@ import {
 import PlayerControls from "./libs/Player.js";
 import { FBXLoader } from './libs/FBXLoader.js';
 
-var scene, camera, cameras, cameraIndex, renderer, controls, clock, player, fredMixer, fredActions, actions, sun, plane, mixer;
-var keyboard;
-var _disableFred;
-const _fredPath = 'https://niksfiles.s3.eu-west-2.amazonaws.com/';
-const _assetPath = '/assets/male';
+var scene, camera, renderer, controls, clock, player, plane, mixer;
+const _assetPath = '/assets/male3';
+var _anims = ["backpeda;", "idle", "run", "shuffleLeft", "shuffleRight", "walk"];
 
+var _assets = [];
 init();
 
-function subclip(sourceClip, name, startFrame, endFrame, fps) {
-  fps = fps || 30;
-
-  var clip = sourceClip.clone();
-  clip.name = name;
-
-  var tracks = [];
-
-  for (var i = 0; i < clip.tracks.length; ++i) {
-    var track = clip.tracks[i];
-    var valueSize = track.getValueSize();
-
-    var times = [];
-    var values = [];
-
-    for (var j = 0; j < track.times.length; ++j) {
-      var frame = track.times[j] * fps;
-
-      if (frame < startFrame || frame >= endFrame) continue;
-
-      times.push(track.times[j]);
-
-      for (var k = 0; k < valueSize; ++k) {
-        values.push(track.values[j * valueSize + k]);
-      }
-    }
-
-    if (times.length === 0) continue;
-
-    track.times = THREE.AnimationUtils.convertArray(times, track.times.constructor);
-    track.values = THREE.AnimationUtils.convertArray(values, track.values.constructor);
-
-    tracks.push(track);
-  }
-
-  clip.tracks = tracks;
-
-  // find minimum .times value across all tracks in the trimmed clip
-  var minStartTime = Infinity;
-
-  for (var i = 0; i < clip.tracks.length; ++i) {
-    if (minStartTime > clip.tracks[i].times[0]) {
-      minStartTime = clip.tracks[i].times[0];
-    }
-  }
-
-  // shift all tracks such that clip begins at t=0
-
-  for (var i = 0; i < clip.tracks.length; ++i) {
-    clip.tracks[i].shift(- 1 * minStartTime);
-  }
-
-  clip.resetDuration();
-
-  return clip;
-}
 
 function loadNextAnim(loader) {
-  //let anim = this.anims.pop();
-  //const game = this;
-  loader.load(`${this.assetsPath}fbx/${anim}.fbx`, function (object) {
-    game.player[anim] = object.animations[0];
-    if (game.anims.length > 0) {
+  let anim = _anims.pop();
+  loader.load(`${_assetPath}/${anim}.fbx`, function (object) {
+    player.anims[anim] = object.animations[0];
+    if (_anims.length > 0) {
       game.loadNextAnim(loader);
     } else {
-      delete game.anims;
-      game.action = "look-around";
-      game.mode = game.modes.ACTIVE;
+      delete _anims;
+      //game.action = "idle";
+      // game.mode = game.modes.ACTIVE;
     }
   });
 }
@@ -158,195 +100,73 @@ function init() {
   const grid = new THREE.GridHelper(200, 80);
   scene.add(grid);
 
-  const anims = [
-    { start: 30, end: 59, name: "backpedal", loop: true },
-    { start: 489, end: 548, name: "idle", loop: true },
-    { start: 768, end: 791, name: "run", loop: true },
-    { start: 839, end: 858, name: "shuffleLeft", loop: true },
-    { start: 899, end: 918, name: "shuffleRight", loop: true },
-    { start: 1264, end: 1293, name: "walk", loop: true }
-  ];
+  _anims.forEach( function(anim){ _assets.push(`${_assetPath}/${anim}.fbx`)});
 
-  const assetsPath2 = '../assets';
-  const anims2 = ["backpedal", "idle", "run", "shuffleLeft", "shuffleRight", "walk"];
-
-  var assets = [];
-  anims2.forEach(function (anim) { assets.push(`${assetsPath2}male3/${anim}.fbx`) });
-
-  _disableFred = true;
-  if (!_disableFred) {
-    const fredloader = new THREE.GLTFLoader();
-    fredloader.setPath(_fredPath)
-    fredloader.load('fred.glb', object => {
-      console.log(object)
-      fredMixer = new THREE.AnimationMixer(object.scene);
-      fredMixer.addEventListener('finished', e => {
-        if (e.action.next != undefined) playAction(e.action.next);
-      });
-      object.scene.children[0].rotation.x = 0;
-      fredActions = {};
-
-      object.scene.traverse(child => {
-        if (child.isMesh) {
-          child.castShadow = true;
-        }
-      });
-
-      anims.forEach(anim => {
-        const clip = subclip(object.animations[0], anim.name, anim.start, anim.end);
-        const action = fredMixer.clipAction(clip);
-        if (!anim.loop) {
-          action.loop = THREE.LoopOnce;
-          action.clampWhenFinished = true;
-        }
-        if (anim.next != undefined) action.next = anim.next;
-        fredActions[anim.name] = action;
-      });
+  const loader = new FBXLoader();
+  loader.load(`${assetsPath2}/male3/idle.fbx`, function (object) {
+    console.log(object)
+    object.mixer = new THREE.AnimationMixer(object);
+    object.name = "Character";
 
 
-      player = new PlayerControls({
-        mixer: fredMixer,
-        actions: fredActions,
-        clock: clock,
-        directionVelocity: 3,
-        distance: 4,
-        far: 1024,
-        fov: 60,
-        gravity: 9.81 / 2,
-        height: .5,
-        initialY: 0,
-        jumpVelocity: 1,
-        maxGravity: 54 / 2,
-        mouseSpeed: 0.002
-      })
-      sun.target = player;
-      object.scene.children[0].scale.set(0.02, 0.02, 0.02);
-      player.add(object.scene.children[0]);
-
-
-      player.playAction('idle');
-
-      camera = player.getPerspectiveCamera();
-      scene.add(player);
-      update();
+    player = new PlayerControls({
+      mixer: object.mixer ,
+      clock: clock,
+      directionVelocity: 3,
+      distance: 4,
+      far: 1024,
+      fov: 60,
+      gravity: 9.81 / 2,
+      height: .5,
+      initialY: 0,
+      jumpVelocity: 1,
+      maxGravity: 54 / 2,
+      mouseSpeed: 0.002
     });
-  } else {
-    const loader = new FBXLoader();
-    loader.load(`${assetsPath2}/male3/idle.fbx`, function (object) {
-      console.log(object)
-      mixer = new THREE.AnimationMixer(object);
-      object.name = "Character";
 
-      actions = {};
+    player.root = object.mixer.getRoot();
 
-      player = new PlayerControls({
-        mixer: mixer,
-        //actions: actions,
-        clock: clock,
-        directionVelocity: 3,
-        distance: 4,
-        far: 1024,
-        fov: 60,
-        gravity: 9.81 / 2,
-        height: .5,
-        initialY: 0,
-        jumpVelocity: 1,
-        maxGravity: 54 / 2,
-        mouseSpeed: 0.002
-      });
-
-      player.root = mixer.getRoot();
-
-      anims.forEach(anim => {
-        var a = {};
-        console.log(anim.name);
-        loader.load(`${assetsPath2}/male3/${anim.name}.fbx`, function (object) {
-          a = object.animations[0];
-        });
-        anim.animation = a;
-        console.log(anim.animation);
-      })
-
-      anims.forEach(anim => {
-        //const clip = subclip(anim.animation, anim.name, anim.start, anim.end);
-        const action = mixer.clipAction(anim.animation);
-        if (!anim.loop) {
-          action.loop = THREE.LoopOnce;
-          action.clampWhenFinished = true;
-        }
-        if (anim.next != undefined) action.next = anim.next;
-        actions[anim.name] = action;
-      });
-
-      player.setActions(actions);
-
-      object.traverse(function (child) {
-        if (child.isMesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
-        }
-      });
-
-      object.scale.set(0.03, 0.03, 0.03);
-      //scene.add(object);
-
-
-
-
-      player.add(object);
-
-
-
-      //const action = mixer.clipAction(object.animations[0]);
-      //action.play();
-      player.playAction('idle');
-
-      scene.add(player);
-      camera = player.getPerspectiveCamera();
-
-      //loadNextAnim(loader)
-      update();
-
+    object.traverse(function (child) {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
     });
-  }
+
+    object.scale.set(0.03, 0.03, 0.03);
+
+    player.add(object);
+
+    //const action = mixer.clipAction(object.animations[0]);
+    //action.play();
+
+    scene.add(player);
+
+    player.anims.idle = object.animations[0];
+
+    camera = player.getPerspectiveCamera();
+
+    loadNextAnim(loader)
+    update();
+
+  });
+
 
 
   window.addEventListener('resize', resize, false);
 }
 
-
-
 function update() {
   requestAnimationFrame(update);
   renderer.render(scene, camera);
 
-
   const dt = clock.getDelta();
-  if (!_disableFred) {
-    fredMixer.update(dt);
-  } else {
-    mixer.update(dt);
-  }
-
-
-  player.animate2(dt);
-
+  mixer.update(dt);
+  player.animate(dt);
 
 }
 
-function playAction(name) {
-  if (player.userData.actionName == name) return;
-  const action = actions[name];
-  player.userData.actionName = name;
-  if (!_disableFred) {
-    fredMixer.stopAllAction();
-  } else {
-    mixer.stopAllAction();
-  }
-  action.reset();
-  action.fadeIn(0.5);
-  action.play();
-}
+
 
 function resize() {
   camera.aspect = window.innerWidth / window.innerHeight;

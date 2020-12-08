@@ -42,7 +42,6 @@ class PlayerSubject extends THREE.Mesh {
 export default class PlayerControls extends THREE.Object3D {
     constructor({
         mixer,
-        //actions,
         clock,
         directionVelocity,
         gravity,
@@ -53,22 +52,14 @@ export default class PlayerControls extends THREE.Object3D {
     }) {
    
         var mesh = new PlayerSubject(meshProps);
-           var move = {
-                left: false,
-                front: false,
-                right: false,
-                back: false,
-                jump: false
-            };
+
 
         super();
 
         this.add(mesh);
-        this.actions = {};
 
         this.getPerspectiveCamera = mesh.getPerspectiveCamera;
         this.getMesh = () => mesh;
-        this.setActions = (actions) => { this.actions = actions };
         this.playerControl = (forward, strafe) => {
             if (forward == 0 && strafe == 0) {
                 delete this.userData.move;
@@ -82,40 +73,27 @@ export default class PlayerControls extends THREE.Object3D {
             }
         };
 
-        this.animate2 = (dt) => {
+        this.animate = (dt) => {
             if (this.userData.move !== undefined) {
                 if (this.userData.move.forward > 0 && this.userData.move.speed < 10) this.userData.move.speed += 0.1;
                 this.translateZ(this.userData.move.forward * dt * this.userData.move.speed);
                 this.translateX(this.userData.move.strafe * dt * this.userData.move.speed);
 
                 //Update actions here
-                if (this.userData.move.forward < 0) {
-                    this.playAction('backpedal');
-                } else if (this.userData.move.forward == 0) {
-                    if (this.userData.move.turn < 0) {
-                        this.playAction('shuffleLeft');
-                    } else {
-                        this.playAction('shuffleRight');
-                    }
-                } else if (this.userData.move.speed > 5) {
-                    this.playAction('run');
-                } else {
-                    this.playAction('walk');
-                }
+               
             } else {
-                this.playAction('idle');
+                // idle
             }
         };
 
-         this.playAction = (name) => {
-            if (this.userData.actionName == name) return;
-            const action = this.actions[name];
-            this.userData.actionName = name;
-            mixer.stopAllAction();
-            action.reset();
-            action.fadeIn(0.5);
+        this.playAction = (action) => {
+            const anim = this.anims[name];
+            const action = this.mixer.clipAction( anim,  this.root );
+            this.mixer.stopAllAction();
+            this.player.action = name;
+            action.fadeIn(0.5);	
             action.play();
-        } 
+        }
 
         // Events
         const onMouseMove = (event) => {
@@ -128,29 +106,26 @@ export default class PlayerControls extends THREE.Object3D {
 
                 let forward = (this.userData.move !== undefined) ? this.userData.move.forward : 0;
                 let strafe = (this.userData.move !== undefined) ? this.userData.move.strafe : 0;
+                let jump = 0;
 
                 switch (keyCode) {
                     case 32: // space
-                        move.jump = true;
+                        jump = 0;
                         break;
                     case 37: // left
                     case 65: // a
-                        move.left = true;
                         strafe = 1;
                         break;
                     case 38: // up
                     case 87: // w
-                        move.front = true;
                         forward = 1;
                         break;
                     case 39: // right
                     case 68: // d
-                        move.right = true;
                         strafe = -1;
                         break;
                     case 40: // down
                     case 83: // s
-                        move.back = true;
                         forward = -1;
                         break;
                     default:
@@ -163,29 +138,26 @@ export default class PlayerControls extends THREE.Object3D {
 
                 let forward = (this.userData.move !== undefined) ? this.userData.move.forward : 0;
                 let strafe = (this.userData.move !== undefined) ? this.userData.move.strafe : 0;
+                let jump = 0;
 
                 switch (keyCode) {
                     case 32: // space
-                        move.jump = false;
+                        jump = 0;
                         break;
                     case 37: // left
                     case 65: // a
-                        move.left = false;
                         strafe = 0;
                         break;
                     case 38: // up
                     case 87: // w
-                        move.front = false;
                         forward = 0;
                         break;
                     case 39: // right
                     case 68: // d
-                        move.right = false;
                         strafe = 0;
                         break;
                     case 40: // down
                     case 83: // s
-                        move.back = false;
                         forward = 0;
                         break;
                     default:
