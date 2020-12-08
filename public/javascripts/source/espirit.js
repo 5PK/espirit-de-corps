@@ -143,6 +143,8 @@ function init() {
     camera = player.getPerspectiveCamera();
 
     loadNextAnim(loader)
+
+    console.log(player.anims);
     update();
 
   });

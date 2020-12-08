@@ -100,7 +100,6 @@ export default class PlayerControls extends THREE.Object3D {
 
         this.playAction = (action) => {
             const anim = this.anims[action];
-            console.log(anim);
             const a = mixer.clipAction( anim,  this.root );
             mixer.stopAllAction();
             this.action = action;
