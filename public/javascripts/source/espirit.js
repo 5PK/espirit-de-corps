@@ -9,7 +9,7 @@ import { FBXLoader } from './libs/FBXLoader.js';
 
 var scene, camera, renderer, controls, clock, player, plane, sun;
 const _assetPath = '/assets/male3';
-var _anims = ["backpedal", "idle", "run", "shuffleLeft", "shuffleRight", "walk"];
+var _anims = ["backpedal", "idle", "run", "shuffleLeft", "shuffleRight", "walk", "punch1", "punch2"];
 
 var _assets = [];
 init();
@@ -160,7 +160,7 @@ function update() {
 
   const dt = clock.getDelta();
 
-  if (player.userData.move !== undefined) {
+  if (player.moveData !== undefined) {
     player.move(dt);
   }
 

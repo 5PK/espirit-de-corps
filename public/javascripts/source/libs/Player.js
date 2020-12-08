@@ -50,45 +50,95 @@ export default class PlayerControls extends THREE.Object3D {
         mouseSpeed,
         ...meshProps
     }) {
-   
         var mesh = new PlayerSubject(meshProps);
-
+   
 
         super();
-
         this.add(mesh);
-        this.curAnim = "idle";
+        this.curAnim = 'idle';
         this.getPerspectiveCamera = mesh.getPerspectiveCamera;
-        this.getMesh = () => mesh;
+        this.getMesh = () => this.mesh;
+        this.moveState = {
+            jump: false,
+            forward: false,
+            strafe:false
+        }
+
         this.playerControl = (forward, strafe) => {
+
             if (forward == 0 && strafe == 0) {
-                delete this.userData.move;
-            } else {
-                if (this.userData.move) {
-                    this.userData.move.forward = forward;
-                    this.userData.move.strafe = strafe;
-                } else {
-                    this.userData.move = { forward, strafe, time: clock.getElapsedTime(), speed: 5 };
+                if(this.curAnim !== 'idle'){
+                    this.playAction('idle', THREE.LoopRepeat);
                 }
+                delete this.moveData;
+            } else {
+                if(this.curAnim !== 'run'){
+                    console.log('i should try to run')
+                    this.tryWalk('run', THREE.LoopRepeat);
+                }
+                this.moveData = { forward, strafe, speed: 20 };
+                
             }
         };
 
         this.move = (dt) => {
-            this.translateZ(this.userData.move.forward * dt * this.userData.move.speed);
-            this.translateX(this.userData.move.strafe * dt * this.userData.move.speed);
+            this.translateZ(this.moveData.forward * dt * this.moveData.speed);
+            this.translateX(this.moveData.strafe * dt * this.moveData.speed);
         }
 
-        this.playAction = (action) => {
-            const anim = this.anims[action];
-            const a = this.mixer.clipAction(anim);
-            this.mixer.stopAllAction();
+        this.tryWalk = (action, loop) => {
+            console.log('try to walk')
+            const a = this.mixer.clipAction(this.anims[action]); // get request animation clip
+            const b = this.mixer.clipAction(this.anims[this.curAnim]) // get cur anim clip
+            //this.mixer.stopAllAction();
             this.curAnim = action;
-            //a.fadeIn(.1);	
+            //b.stop();	
+            //a.loop = loop;
+            //a.play();
+            //b.crossFadeTo(a, .5);
+            a.loop = THREE.LoopRepeat;
             a.play();
         }
 
+        this.playAction = (action, loop) => {
+            const a = this.mixer.clipAction(this.anims[action]); // get request animation clip
+            const b = this.mixer.clipAction(this.anims[this.curAnim]) // get cur anim clip
+            
+            this.curAnim = action;
+            //a.fadeIn(.5);	
+            //a.loop = loop;
+            //a.play();
+            //this.mixer.stopAllAction();
+            b.fadeOut(.5); //crossFadeTo(a, .5);
+            a.fadeIn(.5);
+            a.play();
+        }
+
+        this.attack = (action) => {
+            const a = this.mixer.clipAction(this.anims[action]); // get request animation clip
+            //const b = this.mixer.clipAction(this.anims[this.curAnim]) // get cur anim clip
+            
+            this.curAnim = action;
+            //a.fadeIn(.5);	
+            a.loop = THREE.LoopOnce;
+            //a.play();
+            this.mixer.stopAllAction();
+            //b.fadeOut(.5); //crossFadeTo(a, .5);
+            //a.fadeIn(.5);
+            a.play();
+        }
+        
+
         // Events
-        const onMouseMove = (event) => {
+        const onMouseClick = (event) => {
+            this.attack('punch1');
+            //this.playerControl(0,0);
+        },
+        onDblMouseClick = (event) => {
+            this.playAction('punch2');
+            //this.playerControl(0,0);
+        },
+            onMouseMove = (event) => {
             const movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0,
                 movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
             mesh.rotateCamera(movementY * mouseSpeed);
@@ -96,8 +146,8 @@ export default class PlayerControls extends THREE.Object3D {
         },
             onKeyDown = ({ keyCode }) => {
                 console.log(keyCode)
-                let forward = (this.userData.move !== undefined) ? this.userData.move.forward : 0;
-                let strafe = (this.userData.move !== undefined) ? this.userData.move.strafe : 0;
+                let forward = (this.moveData !== undefined) ? this.moveData.forward : 0;
+                let strafe = (this.moveData !== undefined) ? this.moveData.strafe : 0;
                 let jump = 0;
 
                 switch (keyCode) {
@@ -124,15 +174,12 @@ export default class PlayerControls extends THREE.Object3D {
                         break;
                 }
 
-                var animToPlay = 'walk';
-                if(animToPlay != this.curAnim) this.playAction('walk');
-
                 this.playerControl(forward, strafe);
             },
             onKeyUp = ({ keyCode }) => {
-
-                let forward = (this.userData.move !== undefined) ? this.userData.move.forward : 0;
-                let strafe = (this.userData.move !== undefined) ? this.userData.move.strafe : 0;
+                console.log('run')
+                let forward = (this.moveData !== undefined) ? this.moveData.forward : 0;
+                let strafe = (this.moveData !== undefined) ? this.moveData.strafe : 0;
                 let jump = 0;
 
                 switch (keyCode) {
@@ -158,17 +205,20 @@ export default class PlayerControls extends THREE.Object3D {
                     default:
                         break;
                 }
-
-                var animToPlay = 'idle';
-                if(animToPlay != this.curAnim) this.playAction('idle');
                 
                 this.playerControl(forward, strafe);
 
             };
+
+        
+        document.addEventListener('click', onMouseClick, false);    
+        document.addEventListener('dblclick', onDblMouseClick, false);    
         document.addEventListener('keydown', onKeyDown, false);
         document.addEventListener('keyup', onKeyUp, false);
         document.addEventListener('mousemove', onMouseMove, false);
         this.dispose = () => {
+            document.addEventListener('dblclick', onDblMouseClick, false);    
+            document.addEventListener('click', onMouseClick, false);    
             document.removeEventListener('keydown', onKeyDown, false);
             document.removeEventListener('keyup', onKeyUp, false);
             document.removeEventListener('mousemove', onMouseMove, false);
