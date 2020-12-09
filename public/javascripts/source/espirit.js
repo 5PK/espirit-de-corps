@@ -8,8 +8,8 @@ import PlayerControls from "./libs/Player.js";
 import { FBXLoader } from './libs/FBXLoader.js';
 
 var scene, camera, renderer, controls, clock, player, plane, sun;
-const _assetPath = '/assets/male3';
-var _anims = ["backpedal", "idle", "run", "shuffleLeft", "shuffleRight", "walk", "punch1", "punch2"];
+const _assetPath = '/assets/eng_soldier';
+var _anims = ["idle", "walk", "backward", "left_walk", "right_walk"];
 
 var _assets = [];
 init();
@@ -134,9 +134,6 @@ function init() {
 
     player.add(object);
 
-    //const action = mixer.clipAction(object.animations[0]);
-    //action.play();
-
     scene.add(player);
     player.anims = {};
     player.anims.idle = object.animations[0];
@@ -150,8 +147,6 @@ function init() {
     update();
 
   });
-
-
 
   window.addEventListener('resize', resize, false);
 }

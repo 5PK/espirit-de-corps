@@ -59,6 +59,7 @@ export default class PlayerControls extends THREE.Object3D {
         this.getPerspectiveCamera = mesh.getPerspectiveCamera;
         this.getMesh = () => this.mesh;
         this.moveState = {
+
             jump: false,
             forward: false,
             strafe:false
@@ -67,17 +68,32 @@ export default class PlayerControls extends THREE.Object3D {
         this.playerControl = (forward, strafe) => {
 
             if (forward == 0 && strafe == 0) {
-                if(this.curAnim !== 'idle'){
-                    console.log('i should be idler')
-                    this.playAction4('idle', THREE.LoopRepeat);
-                }
+                this.playAction('idle', THREE.LoopRepeat);
                 delete this.moveData;
-            } else {
-                if(this.curAnim !== 'run'){
-                    console.log('i should try to run')
-                    this.playAction4('run', THREE.LoopRepeat);
+            }
+            //else if(forward != 0 && strafe != 0){
+
+            //} 
+            else {
+                if(forward > 0){
+                    this.playAction('walk', THREE.LoopRepeat);
                 }
-                this.moveData = { forward, strafe, speed: 8 };
+                
+                if(forward < 0 ){
+                    this.playAction('backward', THREE.LoopRepeat);
+                }
+
+                if(strafe > 0 ){
+                    this.playAction('left_walk', THREE.LoopRepeat);
+
+                }
+
+                if(strafe < 0){
+                    this.playAction('right_walk', THREE.LoopRepeat);
+
+                }
+
+                this.moveData = { forward, strafe, speed: 4 };
                 
             }
         };
@@ -87,7 +103,12 @@ export default class PlayerControls extends THREE.Object3D {
             this.translateX(this.moveData.strafe * dt * this.moveData.speed);
         }
 
-        this.playAction4 = (action, loop) => {
+        
+        this.playAction = (action, isBlend, ) => {
+            if(action == this.curAnim){
+                return;
+            }
+
             var a = this.mixer.clipAction(this.anims[action]); // get request animation clip
             var b = this.mixer.clipAction(this.anims[this.curAnim]) // get cur anim clip
             this.mixer.stopAllAction();
@@ -97,45 +118,7 @@ export default class PlayerControls extends THREE.Object3D {
             a.play();
         }
 
-        // https://sbcode.net/threejs/fbx-animation/
-        this.playAction3 = (action, loop) => {
-
-            var a = this.mixer.clipAction(this.anims[action]); // get request animation clip
-            var b = this.mixer.clipAction(this.anims[this.curAnim]) // get cur anim clip
-
-            this.curAnim = action;
-            b.weight = 0;
-            a.crossFadeFrom(b, 1);
-            a.weight = 1;
-            a.play()
-
-        }
     
-        // This play action is like a 50/50 blend between the two. still buggy
-        this.playAction2 = (action, loop) => {
-            const a = this.mixer.clipAction(this.anims[action]); // get request animation clip
-            const b = this.mixer.clipAction(this.anims[this.curAnim]) // get cur anim clip
-            this.curAnim = action;
-            b.fadeOut(1);
-            //b.weight = 0;
-            a.reset();
-            a.fadeIn(1);
-            //console.log(this.mixer)
-            //this.mixer.stopAllAction();
-            a.play();
-        }
-
-        // This play action snaps. When the fade line is enabled the model goes nuts.
-        this.playAction = (action, loop) => {
-            const a = this.mixer.clipAction(this.anims[action]); // get request animation clip
-            a.time = 0;
-            this.mixer.stopAllAction();
-            this.curAnim = action;
-            //a.fadeIn(0.5);
-            a.play();
-        }
-
-
         this.attack = (action) => {
             const a = this.mixer.clipAction(this.anims[action]); // get request animation clip
             //const b = this.mixer.clipAction(this.anims[this.curAnim]) // get cur anim clip
