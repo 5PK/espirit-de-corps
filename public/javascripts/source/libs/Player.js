@@ -68,15 +68,16 @@ export default class PlayerControls extends THREE.Object3D {
 
             if (forward == 0 && strafe == 0) {
                 if(this.curAnim !== 'idle'){
-                    this.playAction('idle', THREE.LoopRepeat);
+                    console.log('i should be idler')
+                    this.playAction4('idle', THREE.LoopRepeat);
                 }
                 delete this.moveData;
             } else {
                 if(this.curAnim !== 'run'){
                     console.log('i should try to run')
-                    this.tryWalk('run', THREE.LoopRepeat);
+                    this.playAction4('run', THREE.LoopRepeat);
                 }
-                this.moveData = { forward, strafe, speed: 20 };
+                this.moveData = { forward, strafe, speed: 8 };
                 
             }
         };
@@ -86,33 +87,54 @@ export default class PlayerControls extends THREE.Object3D {
             this.translateX(this.moveData.strafe * dt * this.moveData.speed);
         }
 
-        this.tryWalk = (action, loop) => {
-            console.log('try to walk')
-            const a = this.mixer.clipAction(this.anims[action]); // get request animation clip
-            const b = this.mixer.clipAction(this.anims[this.curAnim]) // get cur anim clip
-            //this.mixer.stopAllAction();
+        this.playAction4 = (action, loop) => {
+            var a = this.mixer.clipAction(this.anims[action]); // get request animation clip
+            var b = this.mixer.clipAction(this.anims[this.curAnim]) // get cur anim clip
+            this.mixer.stopAllAction();
             this.curAnim = action;
-            //b.stop();	
-            //a.loop = loop;
-            //a.play();
-            //b.crossFadeTo(a, .5);
-            a.loop = THREE.LoopRepeat;
+            b.play();
+            b.crossFadeTo(a, .25);
             a.play();
         }
 
-        this.playAction = (action, loop) => {
+        // https://sbcode.net/threejs/fbx-animation/
+        this.playAction3 = (action, loop) => {
+
+            var a = this.mixer.clipAction(this.anims[action]); // get request animation clip
+            var b = this.mixer.clipAction(this.anims[this.curAnim]) // get cur anim clip
+
+            this.curAnim = action;
+            b.weight = 0;
+            a.crossFadeFrom(b, 1);
+            a.weight = 1;
+            a.play()
+
+        }
+    
+        // This play action is like a 50/50 blend between the two. still buggy
+        this.playAction2 = (action, loop) => {
             const a = this.mixer.clipAction(this.anims[action]); // get request animation clip
             const b = this.mixer.clipAction(this.anims[this.curAnim]) // get cur anim clip
-            
             this.curAnim = action;
-            //a.fadeIn(.5);	
-            //a.loop = loop;
-            //a.play();
+            b.fadeOut(1);
+            //b.weight = 0;
+            a.reset();
+            a.fadeIn(1);
+            //console.log(this.mixer)
             //this.mixer.stopAllAction();
-            b.fadeOut(.5); //crossFadeTo(a, .5);
-            a.fadeIn(.5);
             a.play();
         }
+
+        // This play action snaps. When the fade line is enabled the model goes nuts.
+        this.playAction = (action, loop) => {
+            const a = this.mixer.clipAction(this.anims[action]); // get request animation clip
+            a.time = 0;
+            this.mixer.stopAllAction();
+            this.curAnim = action;
+            //a.fadeIn(0.5);
+            a.play();
+        }
+
 
         this.attack = (action) => {
             const a = this.mixer.clipAction(this.anims[action]); // get request animation clip
@@ -177,7 +199,6 @@ export default class PlayerControls extends THREE.Object3D {
                 this.playerControl(forward, strafe);
             },
             onKeyUp = ({ keyCode }) => {
-                console.log('run')
                 let forward = (this.moveData !== undefined) ? this.moveData.forward : 0;
                 let strafe = (this.moveData !== undefined) ? this.moveData.strafe : 0;
                 let jump = 0;
@@ -211,13 +232,13 @@ export default class PlayerControls extends THREE.Object3D {
             };
 
         
-        document.addEventListener('click', onMouseClick, false);    
-        document.addEventListener('dblclick', onDblMouseClick, false);    
+        //document.addEventListener('click', onMouseClick, false);    
+        //document.addEventListener('dblclick', onDblMouseClick, false);    
         document.addEventListener('keydown', onKeyDown, false);
         document.addEventListener('keyup', onKeyUp, false);
         document.addEventListener('mousemove', onMouseMove, false);
         this.dispose = () => {
-            document.addEventListener('dblclick', onDblMouseClick, false);    
+            //document.addEventListener('dblclick', onDblMouseClick, false);    
             document.addEventListener('click', onMouseClick, false);    
             document.removeEventListener('keydown', onKeyDown, false);
             document.removeEventListener('keyup', onKeyUp, false);
