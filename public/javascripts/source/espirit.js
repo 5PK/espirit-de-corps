@@ -4,8 +4,9 @@ import {
 
 } from "./libs/PointerLock.js";
 
-import PlayerControls from "./libs/Player.js";
+import PlayerControls from "./Player.js";
 import { FBXLoader } from './libs/FBXLoader.js';
+import Keyboard from "./Keyboard.js";
 
 var scene, camera, renderer, controls, clock, player, plane, sun;
 const _assetPath = '/assets/eng_soldier';
@@ -99,6 +100,7 @@ function init() {
 
   _anims.forEach( function(anim){ _assets.push(`${_assetPath}/${anim}.fbx`)});
 
+  const keyboard = new Keyboard();
   const loader = new FBXLoader();
   loader.load(`${_assetPath}/idle.fbx`, function (object) {
     console.log(object)

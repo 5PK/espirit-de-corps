@@ -1,4 +1,5 @@
-import * as THREE from './three.module.js';
+import * as THREE from './libs/three.module.js';
+import Keyboard from './Keyboard.js';
 
 class PlayerCamera extends THREE.Object3D {
     // Third Person Camera
@@ -64,32 +65,39 @@ export default class PlayerControls extends THREE.Object3D {
             forward: false,
             strafe:false
         }
+        this.keyboard = new Keyboard();
+        this.moving = false;
 
-        this.playerControl = (forward, strafe) => {
+        this.playerControl = (forward, strafe, keyCode) => {
 
             if (forward == 0 && strafe == 0) {
-                this.playAction('idle', THREE.LoopRepeat);
+                this.moving = false;
+                this.playAction('idle', false);
                 delete this.moveData;
             }
             //else if(forward != 0 && strafe != 0){
 
             //} 
             else {
-                if(forward > 0){
-                    this.playAction('walk', THREE.LoopRepeat);
+                
+                var blend = this.moving; //if moving we want to blend
+                this.moving = true;
+                console.log('actiontoplay?', keyCode, this.keyboard.keydict[keyCode].firstpress)
+                if(forward > 0 && this.keyboard.keydict[keyCode].firstpress == true){
+                    this.playAction('walk', blend);
                 }
                 
-                if(forward < 0 ){
-                    this.playAction('backward', THREE.LoopRepeat);
+                if(forward < 0 && this.keyboard.keydict[keyCode].firstpress == true){
+                    this.playAction('backward', blend);
                 }
 
-                if(strafe > 0 ){
-                    this.playAction('left_walk', THREE.LoopRepeat);
+                if(strafe > 0 && this.keyboard.keydict[keyCode].firstpress == true){
+                    this.playAction('left_walk', blend);
 
                 }
 
-                if(strafe < 0){
-                    this.playAction('right_walk', THREE.LoopRepeat);
+                if(strafe < 0 && this.keyboard.keydict[keyCode].firstpress == true){
+                    this.playAction('right_walk', blend);
 
                 }
 
@@ -104,7 +112,7 @@ export default class PlayerControls extends THREE.Object3D {
         }
 
         
-        this.playAction = (action, isBlend, ) => {
+        this.playAction = (action, isBlend) => {
             if(action == this.curAnim){
                 return;
             }
@@ -114,7 +122,12 @@ export default class PlayerControls extends THREE.Object3D {
             this.mixer.stopAllAction();
             this.curAnim = action;
             b.play();
-            b.crossFadeTo(a, .25);
+            if(!isBlend){
+                console.log('should fade')
+                b.crossFadeTo(a, .35);
+            }else{
+                console.log('should blend')
+            }
             a.play();
         }
 
@@ -150,11 +163,11 @@ export default class PlayerControls extends THREE.Object3D {
             this.rotateY(-movementX * mouseSpeed);
         },
             onKeyDown = ({ keyCode }) => {
-                console.log(keyCode)
+
                 let forward = (this.moveData !== undefined) ? this.moveData.forward : 0;
                 let strafe = (this.moveData !== undefined) ? this.moveData.strafe : 0;
                 let jump = 0;
-
+                console.log(this.keyboard.keydict[keyCode.toString()]);
                 switch (keyCode) {
                     case 32: // space
                         jump = 0;
@@ -179,13 +192,13 @@ export default class PlayerControls extends THREE.Object3D {
                         break;
                 }
 
-                this.playerControl(forward, strafe);
+                this.playerControl(forward, strafe, keyCode.toString());
             },
             onKeyUp = ({ keyCode }) => {
                 let forward = (this.moveData !== undefined) ? this.moveData.forward : 0;
                 let strafe = (this.moveData !== undefined) ? this.moveData.strafe : 0;
                 let jump = 0;
-
+                console.log(this.keyboard.keydict[keyCode.toString()]);
                 switch (keyCode) {
                     case 32: // space
                         jump = 0;
@@ -210,7 +223,7 @@ export default class PlayerControls extends THREE.Object3D {
                         break;
                 }
                 
-                this.playerControl(forward, strafe);
+                this.playerControl(forward, strafe, keyCode.toString());
 
             };
 
