@@ -1,26 +1,23 @@
-
-class Key{
-    constructor(name, id){
-        this.pressed 
-    }
-
-    
-}
-
-
 export default class Keyboard {
     constructor() {
         this.keydict = {};
+        this.keys = {};
 
         for (var i = 0; i < 200; i++) {
             this.keydict[i.toString()] = {pressed: false, firstpress: true};
         }
 
-        this.isKeyPressed = (key) => { return this.keydict[key].pressed };
+        this.keys.W = 87;
+        this.keys.S = 83;
+        this.keys.A = 65;
+        this.keys.D = 68;
+        this.keys.SHF = 16;
+
+        this.isKeyPressed = (key) => { return this.keydict[this.keys[key]].pressed };
+        this.isFirstPress = (key) => { return this.keydict[this.keys[key]].firstpress };
 
         // Events
         const onKeyDown = ({ keyCode }) => {
-                console.log(this.keydict[keyCode.toString()].pressed)
                 if(this.keydict[keyCode.toString()].pressed == false){
                     this.keydict[keyCode.toString()].pressed = true;
                 }else{

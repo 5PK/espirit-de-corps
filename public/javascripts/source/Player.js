@@ -52,7 +52,7 @@ export default class PlayerControls extends THREE.Object3D {
         ...meshProps
     }) {
         var mesh = new PlayerSubject(meshProps);
-   
+
 
         super();
         this.add(mesh);
@@ -63,7 +63,7 @@ export default class PlayerControls extends THREE.Object3D {
 
             jump: false,
             forward: false,
-            strafe:false
+            strafe: false
         }
         this.keyboard = new Keyboard();
         this.moving = false;
@@ -71,38 +71,33 @@ export default class PlayerControls extends THREE.Object3D {
         this.playerControl = (forward, strafe, keyCode) => {
 
             if (forward == 0 && strafe == 0) {
-                this.moving = false;
                 this.playAction('idle', false);
                 delete this.moveData;
             }
-            //else if(forward != 0 && strafe != 0){
-
-            //} 
             else {
-                
-                var blend = this.moving; //if moving we want to blend
-                this.moving = true;
-                console.log('actiontoplay?', keyCode, this.keyboard.keydict[keyCode].firstpress)
-                if(forward > 0 && this.keyboard.keydict[keyCode].firstpress == true){
-                    this.playAction('walk', blend);
-                }
-                
-                if(forward < 0 && this.keyboard.keydict[keyCode].firstpress == true){
-                    this.playAction('backward', blend);
-                }
-
-                if(strafe > 0 && this.keyboard.keydict[keyCode].firstpress == true){
-                    this.playAction('left_walk', blend);
-
-                }
-
-                if(strafe < 0 && this.keyboard.keydict[keyCode].firstpress == true){
-                    this.playAction('right_walk', blend);
-
-                }
-
                 this.moveData = { forward, strafe, speed: 4 };
-                
+
+                if (this.keyboard.keydict[keyCode].firstpress == false) return;
+
+
+                //forwards
+                if (forward > 0) this.playAction('walk');
+
+                //backwards
+                if (forward < 0) this.playAction('backward');
+
+                //strafe left or forward strafe left
+                if (strafe > 0 && forward >= 0) this.playAction('left_walk');
+
+                //backwards strafe left
+                if (strafe > 0 && forward < 0) this.playAction('right_walk');
+
+                //strafe right or forward strafe right
+                if (strafe < 0 && forward >= 0) this.playAction('right_walk');
+
+                //backwards strafe right
+                if (strafe < 0 && forward < 0) this.playAction('left_walk');
+
             }
         };
 
@@ -111,9 +106,9 @@ export default class PlayerControls extends THREE.Object3D {
             this.translateX(this.moveData.strafe * dt * this.moveData.speed);
         }
 
-        
+
         this.playAction = (action, isBlend) => {
-            if(action == this.curAnim){
+            if (action == this.curAnim) {
                 return;
             }
 
@@ -122,20 +117,15 @@ export default class PlayerControls extends THREE.Object3D {
             this.mixer.stopAllAction();
             this.curAnim = action;
             b.play();
-            if(!isBlend){
-                console.log('should fade')
-                b.crossFadeTo(a, .35);
-            }else{
-                console.log('should blend')
-            }
+            b.crossFadeTo(a, .35);
             a.play();
         }
 
-    
+
         this.attack = (action) => {
             const a = this.mixer.clipAction(this.anims[action]); // get request animation clip
             //const b = this.mixer.clipAction(this.anims[this.curAnim]) // get cur anim clip
-            
+
             this.curAnim = action;
             //a.fadeIn(.5);	
             a.loop = THREE.LoopOnce;
@@ -145,29 +135,28 @@ export default class PlayerControls extends THREE.Object3D {
             //a.fadeIn(.5);
             a.play();
         }
-        
+
 
         // Events
         const onMouseClick = (event) => {
             this.attack('punch1');
             //this.playerControl(0,0);
         },
-        onDblMouseClick = (event) => {
-            this.playAction('punch2');
-            //this.playerControl(0,0);
-        },
+            onDblMouseClick = (event) => {
+                this.playAction('punch2');
+                //this.playerControl(0,0);
+            },
             onMouseMove = (event) => {
-            const movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0,
-                movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
-            mesh.rotateCamera(movementY * mouseSpeed);
-            this.rotateY(-movementX * mouseSpeed);
-        },
+                const movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0,
+                    movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
+                mesh.rotateCamera(movementY * mouseSpeed);
+                this.rotateY(-movementX * mouseSpeed);
+            },
             onKeyDown = ({ keyCode }) => {
 
                 let forward = (this.moveData !== undefined) ? this.moveData.forward : 0;
                 let strafe = (this.moveData !== undefined) ? this.moveData.strafe : 0;
                 let jump = 0;
-                console.log(this.keyboard.keydict[keyCode.toString()]);
                 switch (keyCode) {
                     case 32: // space
                         jump = 0;
@@ -198,7 +187,6 @@ export default class PlayerControls extends THREE.Object3D {
                 let forward = (this.moveData !== undefined) ? this.moveData.forward : 0;
                 let strafe = (this.moveData !== undefined) ? this.moveData.strafe : 0;
                 let jump = 0;
-                console.log(this.keyboard.keydict[keyCode.toString()]);
                 switch (keyCode) {
                     case 32: // space
                         jump = 0;
@@ -222,12 +210,12 @@ export default class PlayerControls extends THREE.Object3D {
                     default:
                         break;
                 }
-                
+                console.log(forward, strafe)
                 this.playerControl(forward, strafe, keyCode.toString());
 
             };
 
-        
+
         //document.addEventListener('click', onMouseClick, false);    
         //document.addEventListener('dblclick', onDblMouseClick, false);    
         document.addEventListener('keydown', onKeyDown, false);
@@ -235,7 +223,7 @@ export default class PlayerControls extends THREE.Object3D {
         document.addEventListener('mousemove', onMouseMove, false);
         this.dispose = () => {
             //document.addEventListener('dblclick', onDblMouseClick, false);    
-            document.addEventListener('click', onMouseClick, false);    
+            document.addEventListener('click', onMouseClick, false);
             document.removeEventListener('keydown', onKeyDown, false);
             document.removeEventListener('keyup', onKeyUp, false);
             document.removeEventListener('mousemove', onMouseMove, false);
