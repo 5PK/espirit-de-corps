@@ -59,44 +59,120 @@ export default class PlayerControls extends THREE.Object3D {
         this.curAnim = 'idle';
         this.getPerspectiveCamera = mesh.getPerspectiveCamera;
         this.getMesh = () => this.mesh;
-        this.moveState = {
-
-            jump: false,
-            forward: false,
-            strafe: false
-        }
         this.keyboard = new Keyboard();
-        this.moving = false;
+        this.direction = 'none';
 
         this.playerControl = (forward, strafe, keyCode) => {
 
             if (forward == 0 && strafe == 0) {
-                this.playAction('idle', false);
+                this.direction = 'none';
+                this.fadeCurAnimTo('idle');
                 delete this.moveData;
             }
             else {
                 this.moveData = { forward, strafe, speed: 4 };
-
+                
+                //if its not the first press, exit
                 if (this.keyboard.keydict[keyCode].firstpress == false) return;
 
-
                 //forwards
-                if (forward > 0) this.playAction('walk');
+                if (forward > 0 && strafe == 0) { 
+                    if(this.direction == 'none'){
+                        this.fadeCurAnimTo('walk'); 
+                    }
+
+                    if(this.direction == 'fRight'){
+                        console.log('blend from fRight to forwards');
+                        //blend right to forward
+                        //this.blendFromAnimTo('right_walk','walk');
+                        this.blendFromAnimTo('right_walk', 'walk');
+                    }
+                    
+                    if(this.direction == 'fLeft'){
+                        //blend left to forward
+                        console.log('blend from fLight to forwards');
+                        //this.blendFromAnimTo('left_walk', 'walk');
+                        this.blendFromAnimTo('left_walk', 'walk');
+                    }
+                    this.direction = 'forward';
+                    return; 
+                }
 
                 //backwards
-                if (forward < 0) this.playAction('backward');
+                if (forward < 0 && strafe == 0) { 
+                    this.fadeCurAnimTo('backward'); 
+                    this.direction = 'backward';
+                    return; 
+                }
 
-                //strafe left or forward strafe left
-                if (strafe > 0 && forward >= 0) this.playAction('left_walk');
+                //right
+                if (strafe < 0 && forward == 0) { 
+                    console.log('move right');
+                    this.fadeCurAnimTo('right_walk'); 
+                    this.direction = 'right';
+                    return; 
+                }
 
-                //backwards strafe left
-                if (strafe > 0 && forward < 0) this.playAction('right_walk');
+                //left
+                if (strafe > 0 && forward == 0) { 
+                    console.log('move left');
+                    //this.fadeCurAnimTo('left_walk'); 
+                    this.fadeTo('left_walk');
+                    this.direction = 'left';
+                    return; 
+                }
 
-                //strafe right or forward strafe right
-                if (strafe < 0 && forward >= 0) this.playAction('right_walk');
+                //forward left
+                if (forward > 0 && strafe > 0) { 
+                    console.log('go f left')
 
-                //backwards strafe right
-                if (strafe < 0 && forward < 0) this.playAction('left_walk');
+                    if(this.direction = 'none' || this.direction == 'forward'){
+                        this.blendActions('walk', 'left_walk')
+                    }
+
+                    this.direction = 'fLeft';
+                    
+                }
+
+                //forward right
+                if (forward > 0 && strafe < 0) {
+                    console.log('go f right')
+                    
+                    if(this.direction = 'none' || this.direction == 'forward'){
+                        this.blendActions('walk', 'right_walk')
+                    }
+                    
+                    this.direction = 'fRight';
+                }
+
+                //backward left
+                if (forward < 0 && strafe > 0) { 
+                    console.log('go back l')
+                    if(this.direction == 'left'){
+                        //TODO blend from left to idle, then to a blend of left and back
+                        this.blendFromAnimTo('left_walk', 'idle'); 
+                        this.blendActions('right_walk', 'backward')
+                    }
+                    
+                    if(this.direction == 'backward'){
+                        this.blendActions('right_walk', 'backward')
+                    }
+                    this.direction == 'bLeft' 
+                    return; 
+                }
+
+                //backward right
+                if (forward < 0 && strafe < 0) {
+                    
+                    if(this.direction == 'left'){
+                        this.blendActions('left_walk', 'walk'); //
+                    }else{
+                        this.blendActions('walk', 'left_walk');
+                    }
+                    this.direction == 'bLeft' 
+                    return; 
+                }
+
 
             }
         };
@@ -106,19 +182,65 @@ export default class PlayerControls extends THREE.Object3D {
             this.translateX(this.moveData.strafe * dt * this.moveData.speed);
         }
 
+        this.blendFromAnimTo = (action1, action2) => {
+            console.log('blend from to', action1, action2);
+            var a = this.mixer.clipAction(this.anims[action1]); // get request animation clip
+            var b = this.mixer.clipAction(this.anims[action2]) // get cur anim clip
+            this.mixer.stopAllAction();
+            this.curAnim = action2;
+            a.play();
+            a.crossFadeTo(b, .5);
+            b.play();
+        }
 
-        this.playAction = (action, isBlend) => {
-            if (action == this.curAnim) {
+        this.fadeTo = (action) => {
+            /*             if (action == this.curAnim) {
+                            return;
+                        } */
+            
+                        var a = this.mixer.clipAction(this.anims[action]); // get request animation clip
+                        var b = this.mixer.clipAction(this.anims[this.curAnim]) // get cur anim clip
+                        this.mixer.stopAllAction();
+                        this.curAnim = action;
+                        b.weight = .5
+                        b.fadeOut(.5)
+                        b.play();
+                        a.fadeIn(.5)
+                        a.play();
+                        //b.crossFadeTo(a, .75);
+                        //a.play();
+                    }
+
+
+        this.fadeCurAnimTo = (action) => {
+/*             if (action == this.curAnim) {
                 return;
-            }
+            } */
 
             var a = this.mixer.clipAction(this.anims[action]); // get request animation clip
             var b = this.mixer.clipAction(this.anims[this.curAnim]) // get cur anim clip
             this.mixer.stopAllAction();
             this.curAnim = action;
             b.play();
-            b.crossFadeTo(a, .35);
+            b.crossFadeTo(a, .75);
             a.play();
+        }
+
+        this.blendActions = (action1, action2) => {
+            console.log('blend actions:', action1, action2)
+            var a = this.mixer.clipAction(this.anims[action1]); // get request animation clip
+            var b = this.mixer.clipAction(this.anims[action2]) // get cur anim clip
+            this.mixer.stopAllAction();
+           // cur.fadeOut(1);
+            //cur.play();
+            //cur.weight = 1;
+            
+            //a.fadeIn(.5);
+            b.fadeIn(.5);
+            a.play();
+            b.play();
+            //a.fadeOut(0.5)
+            this.curAnim = action1;
         }
 
 
@@ -143,7 +265,7 @@ export default class PlayerControls extends THREE.Object3D {
             //this.playerControl(0,0);
         },
             onDblMouseClick = (event) => {
-                this.playAction('punch2');
+                this.fadeCurAnimTo('punch2');
                 //this.playerControl(0,0);
             },
             onMouseMove = (event) => {

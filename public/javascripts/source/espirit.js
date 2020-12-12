@@ -145,7 +145,7 @@ function init() {
     loadNextAnim(loader)
 
     console.log(player.anims);
-    player.playAction('idle')
+    player.fadeCurAnimTo('idle')
     update();
 
   });
