@@ -61,6 +61,7 @@ export default class PlayerControls extends THREE.Object3D {
         this.getMesh = () => this.mesh;
         this.keyboard = new Keyboard();
         this.direction = 'none';
+        this.dt = 
 
         this.playerControl = (forward, strafe, keyCode) => {
 
@@ -70,7 +71,11 @@ export default class PlayerControls extends THREE.Object3D {
                 delete this.moveData;
             }
             else {
-                this.moveData = { forward, strafe, speed: 4 };
+                this.moveData = { forward, strafe, speed: (forward < 0) ? 2 : 5 };
+
+                if(this.keyboard.isKeyPressed('16') && forward > 0){
+                    this.moveData.speed = 13;
+                }
                 
                 //if its not the first press, exit
                 if (this.keyboard.keydict[keyCode].firstpress == false) return;
@@ -81,18 +86,30 @@ export default class PlayerControls extends THREE.Object3D {
                         this.fadeCurAnimTo('walk'); 
                     }
 
+                    if(this.direction == 'forward'){
+                        console.log('fade to sprint');
+                        this.fadeAnimFromTo('walk', 'forward_run');
+                        this.direction = 'forward_sprint';
+                        return; 
+                    }
+
+                    if(this.direction == 'forward_sprint'){
+                        console.log('fade from sprint');
+                        this.fadeAnimFromTo('forward_run', 'walk');
+                    }
+
                     if(this.direction == 'fRight'){
                         console.log('blend from fRight to forwards');
                         //blend right to forward
-                        //this.blendFromAnimTo('right_walk','walk');
-                        this.blendFromAnimTo('right_walk', 'walk');
+                        //this.fadeAnimFromTo('right_walk','walk');
+                        this.fadeAnimFromTo('right_walk', 'walk');
                     }
                     
                     if(this.direction == 'fLeft'){
                         //blend left to forward
                         console.log('blend from fLight to forwards');
-                        //this.blendFromAnimTo('left_walk', 'walk');
-                        this.blendFromAnimTo('left_walk', 'walk');
+                        //this.fadeAnimFromTo('left_walk', 'walk');
+                        this.fadeAnimFromTo('left_walk', 'walk');
                     }
                     this.direction = 'forward';
                     return; 
@@ -117,7 +134,7 @@ export default class PlayerControls extends THREE.Object3D {
                 if (strafe > 0 && forward == 0) { 
                     console.log('move left');
                     //this.fadeCurAnimTo('left_walk'); 
-                    this.fadeTo('left_walk');
+                    this.fadeCurAnimTo('left_walk');
                     this.direction = 'left';
                     return; 
                 }
@@ -138,8 +155,18 @@ export default class PlayerControls extends THREE.Object3D {
                 if (forward > 0 && strafe < 0) {
                     console.log('go f right')
                     
+                    console.log(this.direction);
                     if(this.direction = 'none' || this.direction == 'forward'){
                         this.blendActions('walk', 'right_walk')
+                    }
+
+                    if(this.direction = 'forward_sprint'){
+                        console.log('f-sprint to fr-sprint');
+                        //this.blendActions('walk', 'right_walk')
+                        //this.blendActions('forward_run', 'right_run')
+                        this.fadeCurAnimWith('right_run');
+                        
+                        
                     }
                     
                     this.direction = 'fRight';
@@ -150,7 +177,7 @@ export default class PlayerControls extends THREE.Object3D {
                     console.log('go back l')
                     if(this.direction == 'left'){
                         //TODO blend from left to idle, then to a blend of left and back
-                        this.blendFromAnimTo('left_walk', 'idle'); 
+                        this.fadeAnimFromTo('left_walk', 'idle'); 
                         this.blendActions('right_walk', 'backward')
                     }
                     
@@ -163,13 +190,17 @@ export default class PlayerControls extends THREE.Object3D {
 
                 //backward right
                 if (forward < 0 && strafe < 0) {
-                    
-                    if(this.direction == 'left'){
-                        this.blendActions('left_walk', 'walk'); //
-                    }else{
-                        this.blendActions('walk', 'left_walk');
+                    console.log('go back r')
+                    if(this.direction == 'right'){
+                        //TODO blend from right to idle, then to a blend of right and back
+                        this.fadeAnimFromTo('right_walk', 'idle'); 
+                        this.blendActions('left_walk', 'backward')
                     }
-                    this.direction == 'bLeft' 
+                    
+                    if(this.direction == 'backward'){
+                        this.blendActions('left_walk', 'backward')
+                    }
+                    this.direction == 'bRight' 
                     return; 
                 }
 
@@ -182,40 +213,32 @@ export default class PlayerControls extends THREE.Object3D {
             this.translateX(this.moveData.strafe * dt * this.moveData.speed);
         }
 
-        this.blendFromAnimTo = (action1, action2) => {
-            console.log('blend from to', action1, action2);
-            var a = this.mixer.clipAction(this.anims[action1]); // get request animation clip
-            var b = this.mixer.clipAction(this.anims[action2]) // get cur anim clip
+        this.fadeCurAnimWith = (action) => {
+            console.log('blend together', this.curAnim, action);
+            var newAnim = this.mixer.clipAction(this.anims[action]); 
+            var curAnim = this.mixer.clipAction(this.anims[this.curAnim]) 
             this.mixer.stopAllAction();
-            this.curAnim = action2;
+            this.curAnim = action;
+            
+
+            newAnim.play();
+            curAnim.play();
+        }
+
+
+        this.fadeAnimFromTo = (from, to) => {
+            console.log('blend from to', from, to);
+            var a = this.mixer.clipAction(this.anims[from]); 
+            var b = this.mixer.clipAction(this.anims[to]) 
+            this.mixer.stopAllAction();
+            this.curAnim = to;
             a.play();
             a.crossFadeTo(b, .5);
             b.play();
         }
 
-        this.fadeTo = (action) => {
-            /*             if (action == this.curAnim) {
-                            return;
-                        } */
-            
-                        var a = this.mixer.clipAction(this.anims[action]); // get request animation clip
-                        var b = this.mixer.clipAction(this.anims[this.curAnim]) // get cur anim clip
-                        this.mixer.stopAllAction();
-                        this.curAnim = action;
-                        b.weight = .5
-                        b.fadeOut(.5)
-                        b.play();
-                        a.fadeIn(.5)
-                        a.play();
-                        //b.crossFadeTo(a, .75);
-                        //a.play();
-                    }
-
 
         this.fadeCurAnimTo = (action) => {
-/*             if (action == this.curAnim) {
-                return;
-            } */
 
             var a = this.mixer.clipAction(this.anims[action]); // get request animation clip
             var b = this.mixer.clipAction(this.anims[this.curAnim]) // get cur anim clip
@@ -231,12 +254,8 @@ export default class PlayerControls extends THREE.Object3D {
             var a = this.mixer.clipAction(this.anims[action1]); // get request animation clip
             var b = this.mixer.clipAction(this.anims[action2]) // get cur anim clip
             this.mixer.stopAllAction();
-           // cur.fadeOut(1);
-            //cur.play();
-            //cur.weight = 1;
-            
             //a.fadeIn(.5);
-            b.fadeIn(.5);
+            b.fadeIn(.2);
             a.play();
             b.play();
             //a.fadeOut(0.5)

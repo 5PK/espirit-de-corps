@@ -4,17 +4,12 @@ export default class Keyboard {
         this.keys = {};
 
         for (var i = 0; i < 200; i++) {
+
             this.keydict[i.toString()] = {pressed: false, firstpress: true};
         }
 
-        this.keys.W = 87;
-        this.keys.S = 83;
-        this.keys.A = 65;
-        this.keys.D = 68;
-        this.keys.SHF = 16;
-
-        this.isKeyPressed = (key) => { return this.keydict[this.keys[key]].pressed };
-        this.isFirstPress = (key) => { return this.keydict[this.keys[key]].firstpress };
+        this.isKeyPressed = (key) => { return this.keydict[key].pressed };
+        this.isFirstPress = (key) => { return this.keydict[key].firstpress };
 
         // Events
         const onKeyDown = ({ keyCode }) => {

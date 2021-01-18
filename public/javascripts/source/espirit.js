@@ -10,7 +10,7 @@ import Keyboard from "./Keyboard.js";
 
 var scene, camera, renderer, controls, clock, player, plane, sun;
 const _assetPath = '/assets/eng_soldier';
-var _anims = ["idle", "walk", "backward", "left_walk", "right_walk"];
+var _anims = ["idle", "walk", "backward", "left_walk", "right_walk", "forward_run", "right_run", "left_run"];
 
 var _assets = [];
 init();
