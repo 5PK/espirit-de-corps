@@ -38,4 +38,5 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-module.exports = app;
+
+app.listen(3000, () => console.log('Gator app listening on port 3000!'));
