@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>espirit des corps</title>
+  <style>
+    body {
+      padding: 0;
+      margin: 0;
+    }
+
+    #camera-btn {
+      position: absolute;
+      right: 20px;
+      bottom: 20px;
+      color: #ffffff;
+      background: #0000aa;
+      font-size: 30px;
+      text-align: center;
+      line-height: 45px;
+      vertical-align: middle;
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+    }
+
+    #blocker {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    #instructions {
+      width: 100%;
+      height: 100%;
+
+      display: -webkit-box;
+      display: -moz-box;
+      display: box;
+
+      -webkit-box-orient: horizontal;
+      -moz-box-orient: horizontal;
+      box-orient: horizontal;
+
+      -webkit-box-pack: center;
+      -moz-box-pack: center;
+      box-pack: center;
+
+      -webkit-box-align: center;
+      -moz-box-align: center;
+      box-align: center;
+
+      color: #ffffff;
+      text-align: center;
+      font-family: Arial;
+      font-size: 14px;
+      line-height: 24px;
+
+      cursor: pointer;
+    }
+
+    #bg{
+      background-color: var(--bg-color);
+    }
+  </style>
+
+<meta charset="utf-8" />
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<!--Import Google Icon Font-->
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<!--Import materialize.css-->
+<link type="text/css" rel="stylesheet" href="css/materialize.min.css" media="screen,projection" />
+
+
+
+</head>
+
+<body>
+  <nav class="z-depth-0">
+    <div id="bg" class="nav-wrapper z-depth-0">
+        <a href="https://www.kevincodes.app" class="brand-logo black-text" style="padding-left: 3%;">kevincodes</a>
+        <ul id="nav-mobile" class="right">
+            <li><a class="black-text" href="https://www.kevincodes.app">exit</a></li>
+        </ul>
+    </div>
+</nav>
+<div id="blocker">
+
+    <div id="instructions">
+      
+      <span style="font-size:36px">A little game I wrote in three.js. Exit top right!</span>
+      <br /><br />
+      <span style="font-size:26px">Also you'll need a mouse :)</span>
+      <br /><br />
+      <span style="font-size:26px">Click to play</span>
+      <br /><br />
+      Move: WASD<br />
+      Sprint: SHIFT<br />
+      Look: MOUSE
+    </div>
+
+  </div> 
+
+ <script  src="js/espirit/libs/three.js"></script> 
+  <script src="js/espirit/libs/GLTFLoader.js"></script>
+  <script src="js/espirit/libs/PointerLock.js"></script>
+  <script src="js/espirit/Player.js"></script>
+  <script src="js/espirit/libs/inflate.module.min.js"></script>
+  <script src="js/espirit/libs/NURBSCurve.js"></script>
+
+  <script src="js/espirit/libs/FBXLoader.js"></script>
+  <script  src="js/espirit/Keyboard.js"></script> 
+  <script  src="js/espirit/espirit.js"></script> 
+  <script>
+    var queryDict = {};
+    location.search.substr(1).split("&").forEach(
+      item => {
+        queryDict[item.split("=")[0]] = item.split("=")[1]
+      })
+    if(queryDict.bgColor){
+      document.documentElement.style.setProperty('--bg-color', `#${queryDict.bgColor}`);
+      window.localStorage.setItem('bg-color', queryDict.bgColor)
+    }else if(window.localStorage.getItem('bg-color')){
+        document.documentElement.style.setProperty('--bg-color', `#${window.localStorage.getItem('bg-color')}`);
+    }else{
+      document.documentElement.style.setProperty('--bg-color', `#FFF`);
+    }
+  </script>
+</body>
+
+</html>
